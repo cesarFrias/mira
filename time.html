@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="js/libs/jquery.js"></script>
+    <script src="js/libs/bootstrap.js"></script>
+    <script src="js/libs/underscore.js"></script>
+    <script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"></script>
+    <script type="text/javascript" src="js/libs/gmap3.min.js"></script>
+    <script type="text/javascript" src="http://matthewhudson.me/projects/device.js/device.min.js"></script>    <link type="text/css" rel="stylesheet" href="css/bootstrap.css">
+</head>
+<body>
+    <div id="display" class="container jumbotron"></div>
+    <div id="content" class="container">
+        <div id="jogos_box" class="col-md-8"><h3 id="nome_campeonato" class="text-center"></h3><div id="jogos_lista" class="row"></div></div>
+        <div id="mapa_box" class="col-md-4"><div id="mapa" style="height: 300px; width: 300px;"></div></div>
+    </div>
+</body>
+
+<script type="template" id="nome_time">
+    <h1 id="title" class="text-center"><%= nome %></h1>
+</script>
+
+<script type="template" id="jogos_template">
+<div id="item_box"  class="text-center <%= alert %> alert">
+    <h4 id="placar" class="">
+        <span id="placar_texto" class="">
+            <% if(local == 'visitante'){ %>
+              <a id="adversario" href="?<%= contra_id %>"><%= time_contra %></a>
+              <%= gols_contra %> X <%= gols_favor %> <%= nome %>
+            <% } else { %>
+              <%= nome %> <%= gols_favor %> X
+                <%= gols_contra %> <a id="adversario" href="?<%= contra_id %>"> <%= time_contra %> </a>
+            <% } %>
+        </span>
+        <% if(penaltis == true) { %>
+        <p id="penaltis">
+            <% if(local == 'visitante'){ %>
+              <%= penaltis_contra %> X <%= penaltis_favor %>
+            <% } else { %>
+              <%= penaltis_favor %> X <%= penaltis_contra %>
+            <% } %>
+        <% } %>
+        </p>
+    </h4>
+</div>
+</script>
+
+<script>
+
+</script>
+
+
+<script>
+    $(function() {
+        var fileToLoad = '/api/futebol/' + document.location.search.substring(1);
+        nome_template = _.template($('#nome_time').html());
+        jogos_template = _.template($('#jogos_template').html());
+        $.get(fileToLoad).success(function (data) {
+            nt = nome_template(data);
+            var campeonato = 'Partidas da(o): ' + data['campeonato'];
+            $('#nome_campeonato').html(campeonato);
+            $('#display').append(nt);
+            for (var i = 0; i < data['partidas'].length; i++) {
+                var nome = data['nome'];
+                var time_contra;
+                var penaltis;
+                if (data['partidas'][i]['brasileiro'] != null) {
+                    time_contra = data['partidas'][i]['brasileiro'];
+                }
+                else if (data['partidas'][i]['libertadores'] != null) {
+                    time_contra = data['partidas'][i]['libertadores'];
+                }
+                else {
+                    time_contra = data['partidas'][i]['copadobrasil']
+                }
+
+                var alert;
+                if (data['partidas'][i].ponto == 3) {
+                    alert = 'alert-success'
+                }
+                else if (data['partidas'][i].ponto == 1) {
+                    alert = 'alert-warning'
+                }
+                else {
+                    alert = 'alert-danger'
+                }
+                data['partidas'][i]['alert'] = alert;
+                data['partidas'][i]['nome'] = nome;
+                data['partidas'][i]['time_contra'] = time_contra;
+                if (data['partidas'][i]['penaltis_favor'] != null) {
+                    penaltis = true;
+                }
+                else {
+                    penaltis = false;
+                }
+                data['partidas'][i]['penaltis'] = penaltis;
+                jt = jogos_template(data['partidas'][i]);
+                $('#jogos_lista').append(jt);
+            }
+            if (device.desktop()) {
+                $('#mapa').gmap3({
+                    map: {
+                        address: data['sede'],
+                        options: {zoom: 13}
+                    }
+                });
+            } else {
+                $('#mapa').html(
+                        '<img src="http://maps.googleapis.com/maps/api/staticmap?center=' + data['sede'] +  '&zoom=13&size=300x300&sensor=false" />'
+
+                );
+            }
+        });
+    });
+
+</script>
+</html>

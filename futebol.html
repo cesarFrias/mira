@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="js/libs/jquery.js"></script>
+    <script src="js/libs/bootstrap.js"></script>
+    <script src="js/libs/underscore.js"></script>
+    <link type="text/css" rel="stylesheet" href="css/bootstrap.css">
+</head>
+<body>
+    <div id="container" class="container">
+    <div id="head" class="jumbotron"><h1 id="title" class="text-center">Futebol</h1></div>
+    <div id="content" class="row col-md-10 col-md-offset-1">
+    <div id="items"></div>
+    </div>
+    </div>
+</body>
+
+<script id="time" type="template">
+    <div id="item" class="col-md-6">
+        <div id="tipo" class="panel-body <%= alert %> alert">
+            <a id="link" href="time.html?<%= id %>">
+                <p id="nome" class="lead text-center"><%= nome %></p>
+
+                <p id="estado" class="text-center"><%= estado %></p></a></div>
+    </div>
+</script>
+
+<script>
+    $(document).ready(function(){
+        time_template = _.template($('#time').html());
+        $.get('/api/futebol').success(function(data){
+            for (var i = 0; i < data.length; i++){
+                var alert;
+                if (data[i].ponto == 3){
+                    alert = 'alert-success'
+                }
+                else if (data[i].ponto == 1){
+                    alert = 'alert-warning'
+                }
+                else {
+                    alert = 'alert-danger'
+                }
+                data[i]['alert'] = alert;
+                tt = time_template(data[i]);
+                $('#items').append(tt);
+            }
+        });
+    });
+</script>
+</html>
